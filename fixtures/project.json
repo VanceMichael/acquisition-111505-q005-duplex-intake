@@ -1,0 +1,8 @@
+{
+  "name": "双面扫描交接流的册件归属与补页接收",
+  "probe": "/scan/events",
+  "identityFields": [
+    "book",
+    "sheet"
+  ]
+}
