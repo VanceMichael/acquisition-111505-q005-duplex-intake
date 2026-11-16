@@ -12,6 +12,7 @@ export class Archive {
   async initialize() {
     await mkdir(join(this.directory, 'blobs'), { recursive: true });
     await mkdir(join(this.directory, 'receipts'), { recursive: true });
+    await mkdir(join(this.directory, 'state'), { recursive: true });
     return this;
   }
   async atomic(path, bytes) {
@@ -21,6 +22,17 @@ export class Archive {
     finally { await file.close(); }
     try { await rename(temporary, path); }
     catch (error) { await unlink(temporary).catch(() => {}); throw error; }
+  }
+  async store(raw) {
+    const bytes = Buffer.isBuffer(raw) ? raw : Buffer.from(raw);
+    const sha256 = digest(bytes);
+    await this.atomic(join(this.directory, 'blobs', sha256), bytes);
+    return sha256;
+  }
+  async has(sha256) {
+    if (!/^[0-9a-f]{64}$/.test(sha256)) return false;
+    try { await readFile(join(this.directory, 'blobs', sha256)); return true; }
+    catch (error) { if (error.code === 'ENOENT') return false; throw error; }
   }
   async accept(source, identity, data, raw) {
     const operation = async () => {
